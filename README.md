@@ -30,17 +30,15 @@ Tier-B signals — Docs 0/2 · Permissions 1/2 · Commerce 0/4 · Monetization 0
 
 Prefer a browser to a terminal? A single-file web app wraps the same auditor — type a URL, get the Tier-A facts and Tier-B signals laid out and explained, each check with its live finding **and** a plain-English note on what it looks for.
 
-**▶ Live page: <https://az9713.github.io/agent-readiness-auditor/>** — the project's home on GitHub Pages: see what a report looks like, request an audit (it opens a GitHub issue), and get the one-command local setup.
+**▶ Live, in-browser auditor: <https://az9713.github.io/agent-readiness-auditor/>** — enter a URL and the audit runs **client-side**, with results rendered in the page. No server: a JavaScript port of the checks reads the target site through a public CORS proxy and parses it with the browser's own DOM/XML/JSON parsers.
 
-![The Agent Readiness Auditor web UI showing a full audit of vercel.com — Tier-A facts and Tier-B proxy signals, each check colour-coded pass/fail/unknown with an explanation.](docs/assets/web-ui.png)
-
-> The Pages site is **static**, so it can't run an audit in the browser (no server, no headless Chromium, and CORS blocks cross-origin fetches). For instant, fully-interactive audits, run the web UI locally — stdlib-only, no Flask, no extra dependency:
+Because a static page has no response headers and no headless browser, the ~4 checks that need them — readable-without-JS (#3), CDN (#10), Last-Modified/ETag (#19), cache (#21) — show `—` with a note. For **all 22 checks at full fidelity**, run the web UI locally (stdlib-only, no Flask, no extra dependency):
 
 ```bash
 python webapp.py            # then open http://127.0.0.1:8000
 ```
 
-It reuses `agent_audit.py` unchanged, so the page and the CLI can never disagree about a result. See [docs/getting-started/web-ui.md](docs/getting-started/web-ui.md). To host a backend that audits in-browser, see [DEPLOY.md](DEPLOY.md).
+The local UI reuses `agent_audit.py` unchanged, so the page and the CLI never disagree. See [docs/getting-started/web-ui.md](docs/getting-started/web-ui.md). To host a full-fidelity backend, see [DEPLOY.md](DEPLOY.md).
 
 ## The development journey
 

@@ -4,122 +4,437 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Agent Readiness Auditor</title>
-<meta name="description" content="Audit any website for how usable it is to AI agents — 12 Tier-A fact checks + 10 Tier-B proxy signals, pass/fail/unknown, no blended score.">
-<meta property="og:title" content="Agent Readiness Auditor">
-<meta property="og:description" content="How usable is a website to an AI agent — not to a human?">
+<meta name="description" content="Audit any website for how usable it is to AI agents — Tier-A facts + Tier-B proxy signals, pass/fail/unknown, no blended score. Runs in your browser.">
 <style>
   :root { --bg:#0f1115; --card:#191c23; --line:#2a2f3a; --fg:#e6e9ef; --mut:#9aa3b2;
           --pass:#3fb950; --fail:#f85149; --unk:#8b949e; --accent:#58a6ff; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--fg);
          font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
-  .wrap { max-width:880px; margin:0 auto; padding:40px 20px 80px; }
-  h1 { font-size:30px; margin:0 0 4px; }
-  .sub { color:var(--mut); margin:0 0 28px; font-size:17px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; }
+  .wrap { max-width:880px; margin:0 auto; padding:36px 20px 80px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  .sub { color:var(--mut); margin:0 0 22px; }
   form { display:flex; gap:8px; }
   input[type=text] { flex:1; padding:11px 13px; border:1px solid var(--line); border-radius:8px;
-                     background:var(--bg); color:var(--fg); font-size:15px; }
+                     background:var(--card); color:var(--fg); font-size:15px; }
   input[type=text]:focus { outline:none; border-color:var(--accent); }
   button { padding:11px 18px; border:0; border-radius:8px; background:var(--accent);
            color:#06223f; font-weight:600; font-size:15px; cursor:pointer; }
-  .fineprint { color:var(--mut); font-size:13px; margin:10px 0 0; }
+  button:disabled { opacity:.55; cursor:default; }
+  .hint { color:var(--mut); font-size:13px; margin:10px 0 0; }
+  .tally { display:flex; flex-wrap:wrap; gap:8px 16px; margin:18px 0 6px; color:var(--mut); font-size:14px; }
+  .tally b { color:var(--fg); font-weight:600; }
   h2 { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--mut);
-       margin:34px 0 12px; border-bottom:1px solid var(--line); padding-bottom:6px; }
-  img.shot { width:100%; border:1px solid var(--line); border-radius:12px; display:block; }
-  pre { background:#0b0d12; border:1px solid var(--line); border-radius:8px; padding:14px 16px;
-        overflow:auto; font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
-  .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  .cols h3 { margin:0 0 8px; font-size:15px; }
-  .cols .accent { color:var(--accent); }
-  ul { margin:6px 0; padding-left:18px; color:var(--mut); }
+       margin:28px 0 10px; border-bottom:1px solid var(--line); padding-bottom:6px; }
+  .grp { margin:18px 0 6px; font-weight:600; color:var(--accent); font-size:14px; }
+  .row { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:8px 0; }
+  .row .top { display:flex; gap:10px; align-items:baseline; }
+  .sym { font-size:16px; width:22px; flex:none; text-align:center; }
+  .nm { font-weight:600; } .id { color:var(--mut); font-size:12px; }
+  .detail { margin:4px 0 0 32px; }
+  .pass .detail { color:var(--pass); } .fail .detail { color:var(--fail); } .unknown .detail { color:var(--unk); }
+  .why { margin:6px 0 0 32px; color:var(--mut); font-size:13px; }
+  .note { background:#1b222e; border:1px solid var(--line); border-radius:8px; color:var(--mut);
+          padding:10px 13px; font-size:13px; margin:10px 0 0; }
+  .err { color:var(--fail); background:var(--card); border:1px solid var(--fail); border-radius:8px; padding:12px 14px; }
+  #status { color:var(--mut); margin:18px 0; }
+  .meta { color:var(--mut); font-size:12px; margin-top:6px; }
   a { color:var(--accent); }
-  .legend { color:var(--mut); font-size:13px; margin-top:6px; }
-  footer { color:var(--mut); font-size:13px; margin-top:40px; border-top:1px solid var(--line); padding-top:16px; }
-  @media (max-width:640px){ .cols { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Agent Readiness Auditor</h1>
   <p class="sub">How usable is a website to an AI agent — not to a human?</p>
-
-  <div class="card">
-    <form id="f">
-      <input id="url" type="text" placeholder="example.com" required autofocus>
-      <button type="submit">Audit&nbsp;▶</button>
-    </form>
-    <p class="fineprint">
-      This opens a pre-filled <b>GitHub issue</b> with your URL — the audit runs in CI and the
-      result is posted back. <b>Want instant results?</b> Run it locally in one command (below);
-      the live in-browser version can't run here because GitHub Pages is static (no server,
-      no headless browser).
-    </p>
-  </div>
-
-  <h2>What a report looks like</h2>
-  <img class="shot" src="docs/assets/web-ui.png"
-       alt="A full audit of vercel.com: Tier-A facts and Tier-B proxy signals, each check colour-coded pass/fail/unknown with a plain-English explanation.">
-  <p class="legend">✅ pass · ❌ fail · — unknown. Tier-A are verified facts; Tier-B are proxy
-     signals (a ✅ is trustworthy, a — is <b>not</b> proof of absence). No blended score.</p>
-
-  <h2>Run a live audit in 30 seconds</h2>
-  <p style="color:var(--mut);margin:0 0 10px">Clone the repo, then either the CLI or the local web UI:</p>
-  <pre>git clone https://github.com/az9713/agent-readiness-auditor
-cd agent-readiness-auditor
-pip install -r requirements.txt
-python -m playwright install chromium
-
-# command line:
-python agent_audit.py vercel.com
-
-# or the web UI (same page as the screenshot, fully interactive):
-python webapp.py          # then open http://127.0.0.1:8000</pre>
-
-  <h2>What it checks</h2>
-  <div class="cols">
-    <div>
-      <h3><span class="accent">Tier&nbsp;A</span> — facts (12)</h3>
-      <ul>
-        <li><b>Read:</b> llms.txt, structured data, coverage</li>
-        <li><b>Trust:</b> AI-bot policy, allow/block stance</li>
-        <li><b>Freshness:</b> dates, Last-Modified/ETag, canonical, cache</li>
-        <li><b>Discovery:</b> sitemap.xml, readable-without-JS, OpenGraph</li>
-      </ul>
-    </div>
-    <div>
-      <h3><span class="accent">Tier&nbsp;B</span> — proxies (10)</h3>
-      <ul>
-        <li><b>Docs:</b> markdown alternative, public API spec</li>
-        <li><b>Permissions:</b> automated-use policy, CDN / pay-per-crawl</li>
-        <li><b>Commerce:</b> product feed, price/stock, CAPTCHA, A2A/AP2/UCP/x402</li>
-        <li><b>Monetization:</b> content-licensing / AI-access, paywall</li>
-      </ul>
-    </div>
-  </div>
-
-  <footer>
-    <a href="https://github.com/az9713/agent-readiness-auditor">Source on GitHub</a> ·
-    <a href="https://github.com/az9713/agent-readiness-auditor/blob/main/docs/index.md">Docs</a> ·
-    <a href="https://github.com/az9713/agent-readiness-auditor/blob/main/docs/examples/full-audit-log.md">Full audit log</a> ·
-    <a href="https://github.com/az9713/agent-readiness-auditor/blob/main/development-journey.md">How it was built</a>
+  <form id="f">
+    <input id="url" type="text" placeholder="example.com" required autofocus autocomplete="off">
+    <button id="go" type="submit">Audit</button>
+  </form>
+  <p class="hint">Runs in your browser. To read other sites it routes fetches through a public CORS
+     proxy (<code>corsproxy.io</code>) — the URL you enter is sent there. Header- and
+     render-based checks (#3, #10, #19, #21) aren't available in a static page and show
+     <b>—</b>. For full-fidelity audits, run the <a href="https://github.com/az9713/agent-readiness-auditor">Python tool</a> locally.</p>
+  <div id="status"></div>
+  <div id="out"></div>
+  <footer class="meta" style="margin-top:36px;border-top:1px solid var(--line);padding-top:14px">
+    <a href="https://github.com/az9713/agent-readiness-auditor">Source &amp; docs on GitHub</a>
   </footer>
 </div>
 
 <script>
-  // The "Audit" button is the front door of the Issue → Action → Pages flow: it opens a
-  // pre-filled GitHub issue. No backend is needed for this, which is why it works on static Pages.
-  const REPO = "https://github.com/az9713/agent-readiness-auditor";
-  document.getElementById('f').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const url = document.getElementById('url').value.trim();
-    if (!url) return;
-    const title = encodeURIComponent("Audit request: " + url);
-    const body = encodeURIComponent(
-      "Please audit this URL with the Agent Readiness Auditor:\n\n" + url +
-      "\n\n(Run locally for instant results: `python agent_audit.py " + url + "`)");
-    window.open(REPO + "/issues/new?title=" + title + "&body=" + body, "_blank", "noopener");
+"use strict";
+// ===========================================================================
+// Browser port of the Agent Readiness Auditor. Same checks as agent_audit.py,
+// reimplemented in JS because a static page has no Python/headless browser.
+// Cross-origin fetches go through a CORS proxy (the browser can't read other
+// origins directly). Checks needing response headers or a JS render can't run
+// here and return UNKNOWN with a note — flagged, never faked.
+// ===========================================================================
+const PROXY = "https://corsproxy.io/?url=";
+const PASS = "pass", FAIL = "fail", UNKNOWN = "unknown";
+const SYM = { pass:"✅", fail:"❌", unknown:"—" };
+const A_ORDER = ["Read","Trust","Freshness","Discovery"];
+const B_ORDER = ["Docs","Permissions","Commerce","Monetization"];
+
+const AI_USER_AGENTS = ["gptbot","oai-searchbot","chatgpt-user","claudebot","claude-web",
+  "anthropic-ai","google-extended","perplexitybot","ccbot","bytespider","amazonbot",
+  "applebot-extended","meta-externalagent","cohere-ai","diffbot"];
+const CAPTCHA_MARKERS = { "reCAPTCHA":["recaptcha"], "hCaptcha":["hcaptcha"], "Turnstile":["turnstile"],
+  "Arkose/FunCaptcha":["arkoselabs","funcaptcha"], "GeeTest":["geetest"], "DataDome":["datadome"],
+  "PerimeterX/HUMAN":["perimeterx","human-challenge"] };
+const PAYWALL_VENDORS = ["piano.io","tinypass","poool","pelcro","pico.tools","memberful"];
+const AI_ACCESS_PROVIDERS = ["tollbit","scalepost","prorata","rslcollective","really simple licensing","cloudflare ai audit"];
+const OFFER_KEYS = ["offers","price","pricecurrency","availability","lowprice","highprice"];
+const AP2_MARKER = "google-agentic-commerce/ap2";
+
+const EXPLAIN = {
+  1:"A /llms.txt file is a curated map of the site written for AI. Present = the site deliberately guides agents.",
+  11:"JSON-LD / microdata on the homepage lets an agent read entities (organisation, product, article) instead of guessing from prose.",
+  14:"Whether structured data appears across several sampled pages, not just the homepage.",
+  6:"Does robots.txt name specific AI crawlers (GPTBot, ClaudeBot, …)? Naming them means the site has an explicit position on AI access.",
+  7:"For each named AI bot, whether it is allowed, partially restricted, or fully blocked.",
+  18:"datePublished / dateModified in a machine-readable form, so an agent knows how fresh the content is.",
+  19:"HTTP Last-Modified / ETag validators — let an agent cache a page and cheaply re-check it.",
+  20:"A declared canonical URL removes duplicate-URL ambiguity about a page's true address.",
+  21:"Cache-Control / Expires tell an agent how long a response may be reused.",
+  2:"A machine-readable list of the site's URLs (often with last-modified dates) — the front door for crawling.",
+  3:"How much content is in the raw HTML versus only after a browser runs JavaScript.",
+  12:"OpenGraph (og:) meta tags give a clean title / description / image — the share-card metadata agents reuse.",
+  4:"A markdown / plain-text version of the content (alternate link or /llms-full.txt) an agent can read without HTML noise.",
+  5:"An OpenAPI / Swagger spec at a common path — a machine-readable contract for programmatic access.",
+  9:"A machine-readable statement of automated-use terms (/.well-known/tdmrep.json or a licence link).",
+  10:"Served via a CDN that can offer bot-management or pay-per-crawl. Capability, not confirmation it is on.",
+  13:"A catalogue an agent can read: /products.json, an RSS/Atom feed, or Product structured data.",
+  15:"JSON-LD Offer carrying price / availability — an agent can read price and stock directly.",
+  16:"A CAPTCHA / bot-wall vendor on the page. A detected barrier is the one Tier-B ❌ — it impedes agent automation.",
+  17:"Whether the site publicly declares an agent-commerce protocol (A2A, AP2, UCP, x402).",
+  23:"A declared content-licensing or AI-access programme (tdmrep.json, TollBit, ScalePost, …).",
+  24:"A machine-readable paywall marker (isAccessibleForFree:false or a paywall vendor)."
+};
+// id, name, group, tier
+const CHECKS = [
+  [1,"llms.txt present","Read","A"], [11,"Structured data (homepage)","Read","A"], [14,"Structured-data coverage","Read","A"],
+  [6,"Explicit AI-bot policy","Trust","A"], [7,"AI-bot allow/block stance","Trust","A"],
+  [18,"Machine-readable dates","Freshness","A"], [19,"Last-Modified / ETag","Freshness","A"],
+  [20,"Canonical URL","Freshness","A"], [21,"Cache headers","Freshness","A"],
+  [2,"sitemap.xml present","Discovery","A"], [3,"Readable without JavaScript","Discovery","A"], [12,"OpenGraph tags","Discovery","A"],
+  [4,"Clean text/markdown alternative","Docs","B"], [5,"Public API spec","Docs","B"],
+  [9,"Automated-use licence/policy","Permissions","B"], [10,"CDN / pay-per-crawl capable","Permissions","B"],
+  [13,"Machine-readable product feed","Commerce","B"], [15,"Machine-readable price/stock","Commerce","B"],
+  [16,"Checkout bot-wall (CAPTCHA)","Commerce","B"], [17,"Agent-commerce protocol","Commerce","B"],
+  [23,"Content-licensing / AI-access","Monetization","B"], [24,"Machine-readable paywall","Monetization","B"],
+];
+
+// ---- fetch via CORS proxy. Returns {ok, code, text}. Never throws. ----
+// The proxy returns its own 200 even when the origin soft-404s (serving the site's
+// HTML 404/SPA shell), so the status code can't be trusted for presence. Presence is
+// derived from CONTENT instead: textPresent() (non-empty and not an HTML page) for text
+// files, jsonObjOk() (parses to an object) for JSON, and the XML/JSON parsers self-validate.
+async function fetchURL(u){
+  try{
+    const r = await fetch(PROXY + encodeURIComponent(u));
+    const text = await r.text();
+    return {ok: r.ok, code: r.status, text};
+  }catch(e){ return {ok:false, code:0, text:"", error:String(e)}; }
+}
+const isHtml = t => /<!doctype html|<html[\s>]/i.test((t||"").slice(0,600));
+const textPresent = t => !!t && t.trim().length>0 && !isHtml(t);
+const jsonObjOk = t => { try{ const j=JSON.parse(t); return !!j && typeof j==="object"; }catch(e){ return false; } };
+const HTML = t => new DOMParser().parseFromString(t||"", "text/html");
+const XML  = t => new DOMParser().parseFromString(t||"", "application/xml");
+const root = u => { const a=document.createElement("a"); a.href=u; return a.protocol+"//"+a.host; };
+
+// ---- parsing helpers (mirror agent_audit.py) ----
+function jsonldBlobs(doc){
+  const out=[];
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach(s=>{
+    try{ out.push(JSON.parse(s.textContent||"")); }catch(e){}
   });
+  return out;
+}
+function jsonldTypes(d, acc){
+  if(Array.isArray(d)) d.forEach(x=>jsonldTypes(x,acc));
+  else if(d && typeof d==="object"){
+    const t=d["@type"];
+    if(typeof t==="string") acc.push(t);
+    else if(Array.isArray(t)) t.forEach(x=>{ if(typeof x==="string") acc.push(x); });
+    if(d["@graph"]) jsonldTypes(d["@graph"],acc);
+  }
+  return acc;
+}
+function structuredTypes(doc){
+  const types=[];
+  jsonldBlobs(doc).forEach(b=>jsonldTypes(b,types));
+  doc.querySelectorAll("[itemtype]").forEach(el=>{
+    const it=el.getAttribute("itemtype"); if(it) types.push(it.replace(/\/$/,"").split("/").pop());
+  });
+  return types.filter(Boolean);
+}
+function openGraph(doc){
+  const og={};
+  doc.querySelectorAll("meta").forEach(m=>{
+    const p=m.getAttribute("property")||"", c=m.getAttribute("content");
+    if(p.startsWith("og:") && c) og[p]=c;
+  });
+  return og;
+}
+function extractDates(doc){
+  const out=[];
+  doc.querySelectorAll("meta").forEach(m=>{
+    const k=((m.getAttribute("property")||m.getAttribute("name")||m.getAttribute("itemprop")||"")).toLowerCase();
+    const c=m.getAttribute("content");
+    if(["article:published_time","article:modified_time","date","datepublished","datemodified"].includes(k) && c) out.push(c);
+  });
+  doc.querySelectorAll("time").forEach(t=>{ const dt=t.getAttribute("datetime"); if(dt) out.push(dt); });
+  jsonldBlobs(doc).forEach(function walk(b){
+    if(Array.isArray(b)) b.forEach(walk);
+    else if(b && typeof b==="object"){
+      ["datePublished","dateModified"].forEach(k=>{ if(typeof b[k]==="string") out.push(b[k]); });
+      if(b["@graph"]) walk(b["@graph"]);
+    }
+  });
+  return out;
+}
+function canonical(doc){
+  for(const l of doc.querySelectorAll("link[rel]")){
+    const rel=(l.getAttribute("rel")||"").toLowerCase();
+    if(rel.split(/\s+/).includes("canonical") && l.getAttribute("href")) return l.getAttribute("href");
+  }
+  return null;
+}
+function llmsWellformed(t){ return !!t && t.split(/\r?\n/).some(l=>/^#\s+\S/.test(l)); }
+function parseRobots(text){
+  const groups={}, sitemaps=[]; let current=[], lastAgent=false;
+  (text||"").split(/\r?\n/).forEach(raw=>{
+    const line=raw.split("#")[0].trim(); if(!line || !line.includes(":")) return;
+    const idx=line.indexOf(":"); const f=line.slice(0,idx).trim().toLowerCase(); const v=line.slice(idx+1).trim();
+    if(f==="user-agent"){ if(!lastAgent) current=[]; current.push(v.toLowerCase());
+      if(!groups[v.toLowerCase()]) groups[v.toLowerCase()]={allow:[],disallow:[]}; lastAgent=true; }
+    else if(f==="allow"||f==="disallow"){ current.forEach(a=>groups[a][f].push(v)); lastAgent=false; }
+    else if(f==="sitemap"){ sitemaps.push(v); lastAgent=false; }
+    else lastAgent=false;
+  });
+  return {groups, sitemaps};
+}
+function robotsStance(r){
+  const dis=r.disallow.filter(d=>d!=="");
+  if(dis.some(d=>d.trim()==="/")) return "blocked";
+  if(dis.length||r.allow.length) return "partial";
+  return "allowed";
+}
+const namedAI = parsed => AI_USER_AGENTS.filter(a=>parsed.groups[a]);
+function parseSitemap(text){
+  const doc=XML(text);
+  if(doc.querySelector("parsererror")) return [null,[]];
+  const r=doc.documentElement; if(!r) return [null,[]];
+  const tag=r.tagName.replace(/^.*:/,"");
+  if(tag!=="urlset"&&tag!=="sitemapindex") return [null,[]];
+  const locs=[];
+  r.children && Array.from(r.children).forEach(c=>{
+    let loc=null,lm=null;
+    Array.from(c.children).forEach(s=>{ const n=s.tagName.replace(/^.*:/,"");
+      if(n==="loc") loc=(s.textContent||"").trim(); else if(n==="lastmod") lm=(s.textContent||"").trim(); });
+    if(loc) locs.push([loc,lm]);
+  });
+  return [tag,locs];
+}
+function offers(doc){
+  const found=new Set();
+  jsonldBlobs(doc).forEach(function walk(d){
+    if(Array.isArray(d)) d.forEach(walk);
+    else if(d && typeof d==="object"){
+      const t=d["@type"]; const ts=typeof t==="string"?[t]:(Array.isArray(t)?t:[]);
+      if(ts.some(x=>typeof x==="string"&&["offer","aggregateoffer"].includes(x.toLowerCase()))) found.add("Offer");
+      Object.keys(d).forEach(k=>{ if(OFFER_KEYS.includes(k.toLowerCase())) found.add(k); });
+      Object.values(d).forEach(walk);
+    }
+  });
+  return [...found].sort();
+}
+const captcha = txt => Object.entries(CAPTCHA_MARKERS).filter(([n,ns])=>ns.some(x=>(txt||"").toLowerCase().includes(x))).map(([n])=>n);
+function paywall(doc, txt){
+  const m=[];
+  if(jsonldBlobs(doc).some(function has(d){
+    if(Array.isArray(d)) return d.some(has);
+    if(d&&typeof d==="object"){ if([false,"false","False"].includes(d.isAccessibleForFree)) return true; return Object.values(d).some(has); }
+    return false;
+  })) m.push("isAccessibleForFree:false");
+  doc.querySelectorAll("meta").forEach(meta=>{
+    const k=((meta.getAttribute("property")||meta.getAttribute("name")||"")).toLowerCase();
+    const v=((meta.getAttribute("content")||"")).toLowerCase();
+    if(k.includes("content_tier") && ["locked","metered"].includes(v)) m.push("content_tier:"+v);
+  });
+  PAYWALL_VENDORS.forEach(v=>{ if((txt||"").toLowerCase().includes(v)) m.push(v); });
+  return m;
+}
+function licenseOf(doc){
+  for(const l of doc.querySelectorAll("link[rel]")){
+    const rel=(l.getAttribute("rel")||"").toLowerCase();
+    if(rel.split(/\s+/).includes("license") && l.getAttribute("href")) return "<link rel=license>";
+  }
+  for(const meta of doc.querySelectorAll("meta")){
+    const k=((meta.getAttribute("property")||meta.getAttribute("name")||"")).toLowerCase();
+    if(["license","dc.rights","dcterms.license"].includes(k) && meta.getAttribute("content")) return "meta "+k;
+  }
+  return null;
+}
+function altLink(doc, kind){ // kind: "md" or "feed"
+  for(const l of doc.querySelectorAll("link[rel]")){
+    const rel=(l.getAttribute("rel")||"").toLowerCase();
+    if(!rel.split(/\s+/).includes("alternate")) continue;
+    const typ=((l.getAttribute("type")||"")).toLowerCase(), href=((l.getAttribute("href")||"")).toLowerCase();
+    if(kind==="md" && (typ.includes("markdown")||typ==="text/plain"||href.endsWith(".md"))) return true;
+    if(kind==="feed" && (typ.includes("rss")||typ.includes("atom"))) return true;
+  }
+  return false;
+}
+
+// ---- build context (one network pass), then compute checks ----
+async function buildContext(url){
+  const home = await fetchURL(url);
+  if(!home.text) throw new Error("could not reach "+url+(home.error?(" : "+home.error):" (proxy error "+home.code+")"));
+  const base = root(url);
+  const get = p => fetchURL(base + "/" + p);
+  const [robots, llms, llmsFull, agentCard, ucp, tdmrep, products, openapi1, openapi2, openapi3] =
+    await Promise.all([get("robots.txt"), get("llms.txt"), get("llms-full.txt"),
+      get(".well-known/agent-card.json"), get(".well-known/ucp"), get(".well-known/tdmrep.json"),
+      get("products.json"), get("openapi.json"), get(".well-known/openapi.json"), get("swagger.json")]);
+  let agent = agentCard;
+  if(!jsonObjOk(agent.text)){ agent = await get(".well-known/agent.json"); }
+  // Re-derive presence from content — the proxy 200s even on soft-404 HTML pages.
+  robots.ok = textPresent(robots.text); llms.ok = textPresent(llms.text); llmsFull.ok = textPresent(llmsFull.text);
+  agent.ok = jsonObjOk(agent.text); ucp.ok = jsonObjOk(ucp.text); tdmrep.ok = jsonObjOk(tdmrep.text); products.ok = jsonObjOk(products.text);
+  const robotsParsed = robots.ok ? parseRobots(robots.text) : {groups:{},sitemaps:[]};
+  const smUrl = (robotsParsed.sitemaps[0]) || (base+"/sitemap.xml");
+  const sitemap = await fetchURL(smUrl);
+  let [smKind, smLocs] = parseSitemap(sitemap.text);   // self-validates: HTML/soft-404 → [null,[]]
+  // sample up to 3 pages for coverage (#14)
+  let sampleUrls=[];
+  if(smKind==="urlset") sampleUrls = smLocs.slice(0,3).map(x=>x[0]);
+  else if(smKind==="sitemapindex" && smLocs.length){
+    const child = await fetchURL(smLocs[0][0]);
+    if(child.ok){ const [,locs]=parseSitemap(child.text); sampleUrls=locs.slice(0,3).map(x=>x[0]); }
+  }
+  const samples=[];
+  for(const su of sampleUrls){ const r=await fetchURL(su); if(r.ok) samples.push(HTML(r.text)); }
+  let openapi={ok:false,text:""};
+  for(const r of [openapi1,openapi2,openapi3]){ try{ const s=JSON.parse(r.text); if(s&&(s.openapi||s.swagger)){ openapi={ok:true,text:r.text}; break; } }catch(e){} }
+  return { url, home, homeDoc:HTML(home.text), base, robots, robotsParsed,
+           sitemap, smKind, smLocs, llms, llmsFull, agentCard:agent, ucp, tdmrep,
+           products, openapi, samples };
+}
+
+// ---- the 22 checks; each returns [status, detail] ----
+const NA_HEADER = [UNKNOWN, "needs response headers, which aren't exposed to the browser — run the Python tool for this"];
+const NA_RENDER = [UNKNOWN, "needs a headless render, not available in a static page — run the Python tool for this"];
+function computeChecks(c){
+  const D = c.homeDoc, htext = c.home.text;
+  const fns = {
+    1: () => (c.llms.ok && c.llms.text.trim()) ? [PASS, "/llms.txt found ("+(llmsWellformed(c.llms.text)?"valid markdown":"present, no H1")+")"] : [FAIL,"no /llms.txt"],
+    2: () => { if(["urlset","sitemapindex"].includes(c.smKind)){ const lms=c.smLocs.map(x=>x[1]).filter(Boolean);
+                 return [PASS, c.smKind+", "+c.smLocs.length+" entries, freshest: "+(lms.length?lms.sort().slice(-1)[0]:"no lastmod dates")]; }
+               return [FAIL,"no parseable sitemap.xml"]; },
+    3: () => NA_RENDER,
+    6: () => { if(!c.robots.ok) return [FAIL,"no robots.txt"]; const n=namedAI(c.robotsParsed);
+               return n.length ? [PASS,"names "+n.length+" AI bot(s): "+n.join(", ")] : [FAIL,"robots.txt present but names no AI bots"]; },
+    7: () => { const n=namedAI(c.robotsParsed); if(!n.length) return [FAIL,"no AI bots named to have a stance"];
+               return [PASS, n.map(a=>a+": "+robotsStance(c.robotsParsed.groups[a])).join("; ")]; },
+    11: () => { const t=structuredTypes(D); return t.length ? [PASS, t.length+" block(s): "+[...new Set(t)].sort().join(", ")] : [FAIL,"no JSON-LD or microdata"]; },
+    12: () => { const og=openGraph(D); return og["og:title"] ? [PASS, Object.keys(og).length+" og: tag(s) incl. og:title"] : [FAIL,"no og:title"]; },
+    14: () => { if(!c.samples.length){ const t=structuredTypes(D); return [t.length?PASS:FAIL, "no sitemap sample — homepage only: "+(t.length?"has data":"no data")]; }
+                const hits=c.samples.filter(d=>structuredTypes(d).length).length;
+                return [hits?PASS:FAIL, hits+"/"+c.samples.length+" sampled pages carry structured data"]; },
+    18: () => { const d=extractDates(D); return d.length ? [PASS,"found: "+d[0]+(d.length>1?" (+"+(d.length-1)+" more)":"")] : [FAIL,"no machine-readable dates"]; },
+    19: () => NA_HEADER,
+    20: () => { const v=canonical(D); return v ? [PASS,v] : [FAIL,"no rel=canonical"]; },
+    21: () => NA_HEADER,
+    4: () => { const sig=[]; if(c.llmsFull.ok && c.llmsFull.text.trim()) sig.push("/llms-full.txt"); if(altLink(D,"md")) sig.push("<link rel=alternate markdown>");
+               return sig.length ? [PASS,"clean text version: "+sig.join("; ")] : [UNKNOWN,"no machine-friendly text/markdown alternative detected (content negotiation can't be probed in-browser)"]; },
+    5: () => { if(c.openapi.ok){ try{ const s=JSON.parse(c.openapi.text); if(s&&(s.openapi||s.swagger)) return [PASS,"OpenAPI/Swagger spec found (version "+(s.openapi||s.swagger)+")"]; }catch(e){} }
+               return [UNKNOWN,"no public API spec at common paths"]; },
+    9: () => { const sig=[]; if(c.tdmrep.ok) sig.push("/.well-known/tdmrep.json (TDM reservation)"); const l=licenseOf(D); if(l) sig.push(l);
+               return sig.length ? [PASS,"automated-use policy declared: "+sig.join("; ")] : [UNKNOWN,"no machine-readable licence/TDM policy found"]; },
+    10: () => NA_HEADER,
+    13: () => { const sig=[]; if(c.products.ok){ try{ const j=JSON.parse(c.products.text); if(j&&j.products) sig.push("/products.json"); }catch(e){} }
+                if(altLink(D,"feed")) sig.push("RSS/Atom feed link");
+                if([D,...c.samples].some(d=>structuredTypes(d).map(x=>x.toLowerCase()).includes("product"))) sig.push("Product structured data");
+                return sig.length ? [PASS,"machine-readable product data: "+sig.join("; ")] : [UNKNOWN,"no machine-readable product feed detected"]; },
+    15: () => { for(const d of [D,...c.samples]){ const o=offers(d); if(o.length) return [PASS,"machine-readable price/stock: "+o.join(", ")]; }
+                return [UNKNOWN,"no machine-readable price/availability (Offer) data found"]; },
+    16: () => { const v=captcha(htext); return v.length ? [FAIL,"bot-wall detected ("+v.join(", ")+") — agent automation likely impeded"] : [UNKNOWN,"no CAPTCHA/bot-wall on the homepage (other pages not probed)"]; },
+    17: () => { const f=[]; let card=null; if(c.agentCard.ok){ try{ card=JSON.parse(c.agentCard.text); }catch(e){} }
+                if(card&&typeof card==="object"){ f.push("A2A"); const exts=((card.capabilities||{}).extensions)||[];
+                  const uris=[]; exts.forEach(e=>{ if(e&&typeof e==="object"&&e.uri) uris.push(e.uri); else if(typeof e==="string") uris.push(e); });
+                  if(uris.some(u=>u.includes(AP2_MARKER))) f.push("AP2"); }
+                if(c.ucp.ok){ try{ JSON.parse(c.ucp.text); f.push("UCP"); }catch(e){} }
+                if(c.home.code===402) f.push("x402");
+                return f.length ? [PASS,"declares: "+f.join(", ")] : [UNKNOWN,"no public agent-commerce protocol found (a site can still use ACP or onboard via a platform — not visible from outside)"]; },
+    23: () => { const sig=[]; if(c.tdmrep.ok) sig.push("tdmrep.json"); const low=(htext||"").toLowerCase();
+                AI_ACCESS_PROVIDERS.forEach(p=>{ if(low.includes(p)) sig.push(p); });
+                return sig.length ? [PASS,"content-licensing / AI-access signal: "+[...new Set(sig)].join("; ")] : [UNKNOWN,"no content-licensing or AI-access program detected"]; },
+    24: () => { const m=paywall(D,htext); return m.length ? [PASS,"machine-readable paywall markers: "+m.join(", ")] : [UNKNOWN,"no machine-readable paywall markers found"]; },
+  };
+  return CHECKS.map(([id,name,group,tier])=>{
+    let status,detail;
+    try{ [status,detail]=fns[id](); }catch(e){ status=UNKNOWN; detail="check error: "+e; }
+    return {id,name,group,tier,status,detail};
+  });
+}
+function summarize(results){
+  const out={};
+  A_ORDER.forEach(g=>{ const grp=results.filter(r=>r.group===g&&r.tier==="A");
+    out[g]={pass:grp.filter(r=>r.status===PASS).length, total:grp.length}; });
+  const sig={};
+  results.filter(r=>r.tier==="B").forEach(r=>{ const s=sig[r.group]||(sig[r.group]={found:0,probed:0}); s.probed++; if(r.status===PASS) s.found++; });
+  out.signals=sig; return out;
+}
+
+// ---- UI ----
+const f=document.getElementById('f'), urlIn=document.getElementById('url'), go=document.getElementById('go'),
+      statusEl=document.getElementById('status'), out=document.getElementById('out');
+const esc=s=>{ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; };
+const renderError=m=>{ out.innerHTML='<div class="err"><b>Could not audit this site.</b><br>'+esc(m)+
+  '<br><span style="color:var(--mut);font-size:13px">If the proxy is rate-limiting or down, wait a moment and retry, or run the Python tool locally.</span></div>'; };
+
+f.addEventListener('submit', async e=>{
+  e.preventDefault();
+  let url=urlIn.value.trim(); if(!url) return;
+  if(!url.includes("://")) url="https://"+url;
+  out.innerHTML=''; go.disabled=true;
+  statusEl.textContent='Auditing '+url+' … (fetching via proxy + parsing in your browser)';
+  try{
+    const ctx=await buildContext(url);
+    const results=computeChecks(ctx);
+    render(ctx.url, results, summarize(results));
+  }catch(err){ renderError(String(err.message||err)); }
+  finally{ go.disabled=false; statusEl.textContent=''; }
+});
+
+function rowHtml(c){
+  return '<div class="row '+c.status+'"><div class="top"><span class="sym">'+SYM[c.status]+'</span>'+
+    '<span class="nm">'+esc(c.name)+'</span> <span class="id">[#'+c.id+']</span></div>'+
+    '<div class="detail">'+esc(c.detail)+'</div><div class="why">'+esc(EXPLAIN[c.id])+'</div></div>';
+}
+function tally(label, parts, legend){
+  return '<div class="tally"><span>'+label+'</span>'+parts.map(p=>'<b>'+p+'</b>').join('')+'</div><div class="meta">'+legend+'</div>';
+}
+function render(url, results, summary){
+  let html='<div class="meta">Audited '+esc(url)+'</div>';
+  html+=tally('Tier-A facts', A_ORDER.map(g=>g+' '+summary[g].pass+'/'+summary[g].total),
+              '✅ pass &middot; ❌ fail &middot; — unknown &mdash; verified facts, no blended score');
+  html+='<h2>Tier-A facts</h2>';
+  A_ORDER.forEach(g=>{ const grp=results.filter(r=>r.tier==="A"&&r.group===g); if(!grp.length) return;
+    html+='<div class="grp">'+g+'</div>'; grp.forEach(r=>html+=rowHtml(r)); });
+  const bParts=Object.entries(summary.signals).map(([g,v])=>g+' '+v.found+'/'+v.probed);
+  html+=tally('Tier-B signals', bParts, '✅ signal found &middot; ❌ barrier detected &middot; — none visible');
+  html+='<h2>Tier-B proxy signals</h2>';
+  html+='<div class="note"><b>Read these as proxies, not facts.</b> A ✅ is a trustworthy positive signal. '+
+        'A — means nothing was visible from outside &mdash; it is <b>not</b> proof the site lacks the capability. '+
+        'Only #16 returns ❌, because a detected bot-wall is a trustworthy <i>negative</i>.</div>';
+  B_ORDER.forEach(g=>{ const grp=results.filter(r=>r.tier==="B"&&r.group===g); if(!grp.length) return;
+    html+='<div class="grp">'+g+'</div>'; grp.forEach(r=>html+=rowHtml(r)); });
+  out.innerHTML=html;
+}
 </script>
 </body>
 </html>
