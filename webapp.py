@@ -231,10 +231,18 @@ def render_page():
 # this, someone points it at 169.254.169.254 (cloud metadata) or 127.0.0.1 to
 # reach internal services. Local CLI/web use is the operator auditing their own
 # targets, so the guard stays off there.
-# ponytail: this blocks DIRECT private targets (the common attack). It does NOT
-# re-check redirect hops — requests follows redirects, so a public host that 302s
-# to 169.254.169.254 is the residual hole. Upgrade path if the demo sees abuse:
-# a requests HTTPAdapter that re-validates every hop, or allow_redirects=False.
+# SCOPE — this is best-effort, defense-in-depth, NOT a complete SSRF defense:
+#   * It blocks DIRECT private targets (the common attack).
+#   * It does NOT re-check redirect hops — requests/playwright follow redirects, so a public
+#     host that 302s to 169.254.169.254 still slips through.
+#   * It is check-then-connect, so it does NOT stop DNS rebinding (the host can resolve to a
+#     public IP here, then to a private one when the fetch actually connects).
+# Closing those at the app layer means re-validating every hop AND pinning the resolved IP for
+# the connection, across both requests and playwright — and even then it's fragile. The robust
+# fix for a genuinely public deploy is HOST-LEVEL EGRESS FILTERING (block RFC1918 + link-local
+# at the firewall/network), which no app check can replace. See DEPLOY.md. We keep this guard
+# because the live deployment is static GitHub Pages with NO audit backend, so PUBLIC_DEMO is
+# not actually exposed; this is the floor for anyone who later self-hosts the backend.
 # ---------------------------------------------------------------------------
 def _ip_is_blocked(ip):
     """True if an IP must never be fetched from the public demo. Pure (no DNS) — unit-tested."""

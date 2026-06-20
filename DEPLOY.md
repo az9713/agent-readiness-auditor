@@ -37,14 +37,31 @@ set, `webapp.py` enforces a guard (`reject_if_unsafe`) that resolves the target 
 `169.254.169.254`, `10.0.0.0/8`) and any non-`http(s)` scheme. This is verified by the
 `test_ssrf_*` tests.
 
-**Known limitation:** the guard checks the *submitted* host, not redirect hops. A public host
-that 302-redirects to an internal address would slip through, because `requests` follows
-redirects. If the demo ever sees abuse, close this by re-validating each hop (a custom
-`requests` `HTTPAdapter`) or by disabling redirects. For a low-traffic portfolio demo the direct
-guard is the pragmatic line.
+**The app-level guard is best-effort, not a complete SSRF defense.** Two gaps it does *not*
+close (both flagged by automated review, both real):
 
-There is no rate limiting. If you expose this widely, put it behind the platform's rate limiter
-or a CDN, since each audit launches a browser and is comparatively expensive.
+- **Redirect bypass.** It validates the submitted host, not redirect hops. A public host that
+  302-redirects to `169.254.169.254` slips through, because `requests` and Playwright follow
+  redirects. Sites legitimately redirect (`http→https`, apex→www), so simply disabling redirects
+  breaks normal auditing.
+- **DNS rebinding (TOCTOU).** It resolves and checks the host, then the actual fetch resolves
+  again and connects — a hostile resolver can return a public IP to the check and a private IP
+  to the fetch.
+
+> **If you expose this to untrusted users, do not rely on the app guard alone.** Add
+> **host-level egress filtering** — block outbound connections to RFC1918 (`10/8`, `172.16/12`,
+> `192.168/16`), link-local (`169.254/16`), and loopback at the container/network/firewall layer.
+> That closes both gaps regardless of redirects or rebinding, which an in-process check cannot.
+> On a cloud host, also disable or lock down the instance metadata endpoint. Closing it in code
+> instead would mean re-validating every redirect hop *and* pinning the resolved IP for the
+> connection across both `requests` and Playwright — fragile, and still weaker than egress rules.
+
+This repo ships the app guard as the floor because the **live deployment is static GitHub Pages
+with no audit backend** — `PUBLIC_DEMO` is not exposed anywhere running. It becomes relevant only
+when you self-host the backend, at which point add the egress filtering above.
+
+There is no rate limiting either. If you expose this widely, put it behind the platform's rate
+limiter or a CDN, since each audit launches a browser and is comparatively expensive.
 
 ## After it's live
 
