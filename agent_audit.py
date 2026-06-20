@@ -501,7 +501,15 @@ def render_text(url):
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page(user_agent=USER_AGENT)
-            page.goto(url, wait_until="networkidle", timeout=TIMEOUT * 1000)
+            # domcontentloaded is reliable and fast; then give client-side JS a moment to
+            # render. ponytail: don't wait for networkidle as the goto condition — ad/
+            # analytics/websocket traffic on heavy sites never settles, so it would time out
+            # and return nothing. Instead best-effort-wait for idle, capture whatever rendered.
+            page.goto(url, wait_until="domcontentloaded", timeout=TIMEOUT * 1000)
+            try:
+                page.wait_for_load_state("networkidle", timeout=5000)
+            except Exception:
+                pass  # network never idled — fine, capture the text rendered so far
             text = page.inner_text("body")
             browser.close()
             return text, ""
