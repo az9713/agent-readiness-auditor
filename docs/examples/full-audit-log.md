@@ -186,7 +186,7 @@ Sites are listed in the order they were tested.
 
 **Discovery**
 - ✅ **[2] sitemap** — `sitemapindex, 6 entries`.
-- — **[3] Readable-without-JS** — `could not render: Page.goto: Timeout 15000ms exceeded`. **Problem:** Playwright's `networkidle` wait never settled within 15s — a heavy commerce page with continuous background requests (analytics, chat widgets). See [Problem A](#problem-a-the-3-readable-without-javascript-timeout).
+- ✅ **[3] Readable-without-JS** — `raw text is 4295% of rendered`. *(Re-run after the [render fix](#problem-a-the-3-render-timeout-now-fixed); was `unknown` — a `networkidle` timeout — before.)* The raw HTML is very text-rich, so it passes comfortably.
 - ✅ **[12] OpenGraph** — `9 og: tag(s) incl. og:title`.
 
 **Docs (Tier B)**
@@ -207,7 +207,7 @@ Sites are listed in the order they were tested.
 - — **[23] Licensing/AI-access** — `no content-licensing or AI-access program detected`.
 - — **[24] Paywall** — `no machine-readable paywall markers found`.
 
-**Tally:** Tier-A Read 1/3 · Trust 0/2 · Freshness 2/4 · Discovery 2/3 — Tier-B Docs 1/2 · Permissions 1/2 · Commerce 2/4 · Monetization 0/2.
+**Tally:** Tier-A Read 1/3 · Trust 0/2 · Freshness 2/4 · Discovery 3/3 — Tier-B Docs 1/2 · Permissions 1/2 · Commerce 2/4 · Monetization 0/2. *(Discovery rose from 2/3 to 3/3 after the #3 fix.)*
 
 ---
 
@@ -278,7 +278,7 @@ Sites are listed in the order they were tested.
 
 **Discovery**
 - ✅ **[2] sitemap** — `sitemapindex, 9 entries`.
-- — **[3] Readable-without-JS** — `could not render: Page.goto: Timeout 15000ms exceeded`. **Problem:** same `networkidle` timeout as the other heavy commerce sites ([Problem A](#problem-a-the-3-readable-without-javascript-timeout)).
+- ✅ **[3] Readable-without-JS** — `raw text is 221% of rendered`. *(Re-run after the [render fix](#problem-a-the-3-render-timeout-now-fixed); was `unknown` before.)* Readable without JavaScript.
 - ✅ **[12] OpenGraph** — `7 og: tag(s) incl. og:title`.
 
 **Docs (Tier B)**
@@ -299,7 +299,7 @@ Sites are listed in the order they were tested.
 - — **[23] Licensing/AI-access** — `no content-licensing or AI-access program detected`.
 - — **[24] Paywall** — `no machine-readable paywall markers found`.
 
-**Tally:** Tier-A Read 2/3 · Trust 0/2 · Freshness 3/4 · Discovery 2/3 — Tier-B Docs 0/2 · Permissions 1/2 · Commerce 0/4 · Monetization 0/2. A Shopify store with far fewer agent-facing signals than Allbirds — a reminder that "runs on Shopify" does not guarantee agent-readiness; it depends on what the merchant enables.
+**Tally:** Tier-A Read 2/3 · Trust 0/2 · Freshness 3/4 · Discovery 3/3 — Tier-B Docs 0/2 · Permissions 1/2 · Commerce 0/4 · Monetization 0/2. *(Discovery rose from 2/3 to 3/3 after the #3 fix.)* A Shopify store with far fewer agent-facing signals than Allbirds — a reminder that "runs on Shopify" does not guarantee agent-readiness; it depends on what the merchant enables.
 
 ---
 
@@ -324,7 +324,7 @@ Sites are listed in the order they were tested.
 
 **Discovery**
 - ✅ **[2] sitemap** — `urlset, 633 entries, freshest: 2026-06-20T14:30:14Z`.
-- — **[3] Readable-without-JS** — `could not render: Page.goto: Timeout 15000ms exceeded`. **Problem:** `networkidle` timeout ([Problem A](#problem-a-the-3-readable-without-javascript-timeout)).
+- ❌ **[3] Readable-without-JS** — `raw text only 50% of rendered — content needs JavaScript`. *(Re-run after the [render fix](#problem-a-the-3-render-timeout-now-fixed); was `unknown` before.)* This is now a genuine ❌, not a timeout: NYT renders much of its content client-side, so the raw HTML carries only half the rendered text — a real finding an agent doing a simple fetch would face.
 - ✅ **[12] OpenGraph** — `5 og: tag(s) incl. og:title`.
 
 **Docs (Tier B)**
@@ -345,7 +345,7 @@ Sites are listed in the order they were tested.
 - — **[23] Licensing/AI-access** — `no content-licensing or AI-access program detected`.
 - — **[24] Paywall** — `no machine-readable paywall markers found`. **Note:** NYT *is* paywalled, but the homepage carries no `isAccessibleForFree` flag, and the sampled article did not expose one to the crawler. The marker lives on locked article pages — see [Problem C](#problem-c-paywall-markers-are-rare-and-page-specific).
 
-**Tally:** Tier-A Read 2/3 · Trust 2/2 · Freshness 4/4 · Discovery 2/3 — Tier-B Docs 0/2 · Permissions 0/2 · Commerce 1/4 · Monetization 0/2.
+**Tally:** Tier-A Read 2/3 · Trust 2/2 · Freshness 4/4 · Discovery 2/3 — Tier-B Docs 0/2 · Permissions 0/2 · Commerce 1/4 · Monetization 0/2. *(Discovery stays 2/3 after the #3 fix: #3 is now a real ❌ rather than `unknown`.)*
 
 ---
 
@@ -370,7 +370,7 @@ Sites are listed in the order they were tested.
 
 **Discovery**
 - ✅ **[2] sitemap** — `sitemapindex, 452 entries, freshest: 2026-06-20T10:02:15-04:00`.
-- — **[3] Readable-without-JS** — `could not render: Page.goto: Timeout 15000ms exceeded` ([Problem A](#problem-a-the-3-readable-without-javascript-timeout)).
+- ✅ **[3] Readable-without-JS** — `raw text is 113% of rendered`. *(Re-run after the [render fix](#problem-a-the-3-render-timeout-now-fixed); was `unknown` before.)* Readable without JavaScript.
 - ✅ **[12] OpenGraph** — `6 og: tag(s) incl. og:title`.
 
 **Docs (Tier B)**
@@ -391,7 +391,7 @@ Sites are listed in the order they were tested.
 - — **[23] Licensing/AI-access** — `no content-licensing or AI-access program detected`.
 - — **[24] Paywall** — `no machine-readable paywall markers found`. Same homepage-vs-article limitation as NYT ([Problem C](#problem-c-paywall-markers-are-rare-and-page-specific)).
 
-**Tally:** Tier-A Read 2/3 · Trust 2/2 · Freshness 2/4 · Discovery 2/3 — Tier-B Docs 0/2 · Permissions 1/2 · Commerce 1/4 · Monetization 0/2.
+**Tally:** Tier-A Read 2/3 · Trust 2/2 · Freshness 2/4 · Discovery 3/3 — Tier-B Docs 0/2 · Permissions 1/2 · Commerce 1/4 · Monetization 0/2. *(Discovery rose from 2/3 to 3/3 after the #3 fix.)*
 
 ---
 
@@ -416,7 +416,7 @@ Sites are listed in the order they were tested.
 
 **Discovery**
 - ✅ **[2] sitemap** — `sitemapindex, 60 entries, freshest: 2026-06-20T07:00:00.000-04:00`.
-- — **[3] Readable-without-JS** — `could not render: Page.goto: Timeout 15000ms exceeded` ([Problem A](#problem-a-the-3-readable-without-javascript-timeout)).
+- ✅ **[3] Readable-without-JS** — `raw text is 98% of rendered`. *(Re-run after the [render fix](#problem-a-the-3-render-timeout-now-fixed); was `unknown` before.)* Readable without JavaScript.
 - ✅ **[12] OpenGraph** — `8 og: tag(s) incl. og:title`.
 
 **Docs (Tier B)**
@@ -437,7 +437,7 @@ Sites are listed in the order they were tested.
 - — **[23] Licensing/AI-access** — `no content-licensing or AI-access program detected`.
 - — **[24] Paywall** — `no machine-readable paywall markers found`. **Important:** this article declares `isAccessibleForFree: true` — it is a *free* article, so #24 correctly stays silent. The check tracks the declared marker, not a guess. See [Problem C](#problem-c-paywall-markers-are-rare-and-page-specific).
 
-**Tally:** Tier-A Read 2/3 · Trust 2/2 · Freshness 3/4 · Discovery 2/3 — Tier-B Docs 0/2 · Permissions 1/2 · Commerce 1/4 · Monetization 0/2.
+**Tally:** Tier-A Read 2/3 · Trust 2/2 · Freshness 3/4 · Discovery 3/3 — Tier-B Docs 0/2 · Permissions 1/2 · Commerce 1/4 · Monetization 0/2. *(Discovery rose from 2/3 to 3/3 after the #3 fix.)*
 
 ---
 
@@ -510,7 +510,7 @@ Sites are listed in the order they were tested.
 
 **Discovery**
 - ✅ **[2] sitemap** — `sitemapindex, 287 entries, freshest: 2026-06-20T14:44:41.000Z`.
-- — **[3] Readable-without-JS** — `could not render: Page.goto: Timeout 15000ms exceeded` ([Problem A](#problem-a-the-3-readable-without-javascript-timeout)).
+- ✅ **[3] Readable-without-JS** — `raw text is 162% of rendered`. *(Re-run after the [render fix](#problem-a-the-3-render-timeout-now-fixed); was `unknown` before.)* Readable without JavaScript.
 - ❌ **[12] OpenGraph** — `no og:title`. FT's homepage exposes no OpenGraph title — unusual for a major site.
 
 **Docs (Tier B)**
@@ -531,7 +531,7 @@ Sites are listed in the order they were tested.
 - — **[23] Licensing/AI-access** — `no content-licensing or AI-access program detected`.
 - — **[24] Paywall** — `no machine-readable paywall markers found`. FT is hard-paywalled, but the homepage carries no machine-readable flag, and FT blocks article-link discovery by non-JS clients ([Problem B](#problem-b-article-url-discovery-on-js-heavy-publishers)).
 
-**Tally:** Tier-A Read 2/3 · Trust 2/2 · Freshness 2/4 · Discovery 1/3 — Tier-B Docs 0/2 · Permissions 1/2 · Commerce 1/4 · Monetization 0/2.
+**Tally:** Tier-A Read 2/3 · Trust 2/2 · Freshness 2/4 · Discovery 2/3 — Tier-B Docs 0/2 · Permissions 1/2 · Commerce 1/4 · Monetization 0/2. *(Discovery rose from 1/3 to 2/3 after the #3 fix.)*
 
 ---
 
@@ -587,15 +587,28 @@ Sites are listed in the order they were tested.
 
 These are the recurring issues — one a genuine tool limitation, two research-process frictions.
 
-### Problem A — the [3] "readable without JavaScript" timeout
+### Problem A — the #3 render timeout (now fixed)
 
-**Symptom:** check #3 returned `— could not render: Page.goto: Timeout 15000ms exceeded` on allbirds (homepage), gymshark, nytimes, theatlantic, wired, and ft — six of the twelve audits.
+**Status: FIXED.** This was the one genuine tool limitation the audit surfaced, and it has been resolved. The six affected sites were re-run; their #3 results above reflect the fix.
 
-**Cause:** check #3 renders the page with Playwright using `wait_until="networkidle"`, which waits for the network to be quiet for 500ms. Heavy commercial sites never go quiet — ads, analytics beacons, chat widgets, and websockets keep firing — so the 15-second timeout (`TIMEOUT`) elapses and the render fails. The check correctly degrades to `unknown` rather than crashing, and the other 21 checks are unaffected (they use the plain HTTP fetch, not the browser).
+**Original symptom:** check #3 returned `— could not render: Page.goto: Timeout 15000ms exceeded` on allbirds (homepage), gymshark, nytimes, theatlantic, wired, and ft — six of the twelve audits.
 
-**Where it did NOT happen:** the allbirds *product* page, bloomberg, natgeo, and the three tech sites rendered fine — their pages settled within 15s.
+**Cause:** check #3 rendered the page with Playwright using `wait_until="networkidle"`, which waits for the network to be quiet for 500ms. Heavy commercial sites never go quiet — ads, analytics beacons, chat widgets, and websockets keep firing — so the 15-second timeout (`TIMEOUT`) elapsed and the render failed. The check correctly degraded to `unknown` rather than crashing, and the other 21 checks were unaffected (they use the plain HTTP fetch, not the browser).
 
-**Fixes worth considering:** switch the wait condition from `networkidle` to `domcontentloaded` or `load` (content is usually present long before the network idles), and/or raise the render timeout. Either change would convert most of these `unknown`s into real pass/fail results. This is a real, actionable limitation of the current tool.
+**The fix:** navigate with `wait_until="domcontentloaded"` (reliable and fast), then *best-effort* wait up to 5s for `networkidle` and capture whatever has rendered, without failing if the network never settles. This gives client-side JS time to render while never hanging on a busy site.
+
+**Result after the fix — all six now return a real value:**
+
+| Site | Before | After |
+|------|--------|-------|
+| allbirds (homepage) | `unknown` | ✅ 4295% of rendered |
+| gymshark | `unknown` | ✅ 221% |
+| theatlantic | `unknown` | ✅ 113% |
+| wired (article) | `unknown` | ✅ 98% |
+| ft | `unknown` | ✅ 162% |
+| nytimes | `unknown` | ❌ 50% — *content needs JavaScript* |
+
+Five now pass; NYT correctly **fails**, because it genuinely renders much of its content client-side — exactly the situation check #3 exists to catch. The fix turned six non-answers into five passes and one true negative. The 34 offline tests still pass (the change is in browser-only code, which the offline suite does not exercise; it was verified by re-running the live audits).
 
 ### Problem B — article-URL discovery on JS-heavy publishers
 
@@ -627,4 +640,4 @@ To find a paywalled article that would fire #24, I checked these for the marker 
 
 ## Closing note
 
-Across twelve audits, every Tier-A check and nine of the ten Tier-B checks produced at least one live result. The only check never seen firing is **[23] content-licensing / AI-access**, which stayed `—` everywhere — an honest reflection that machine-readable AI-licensing programmes (`tdmrep.json`, TollBit-style markers) remain rare in the wild as of mid-2026. The one genuine tool limitation surfaced is the [Problem A](#problem-a-the-3-readable-without-javascript-timeout) render timeout, which has a clear fix.
+Across twelve audits, every Tier-A check and nine of the ten Tier-B checks produced at least one live result. The only check never seen firing is **[23] content-licensing / AI-access**, which stayed `—` everywhere — an honest reflection that machine-readable AI-licensing programmes (`tdmrep.json`, TollBit-style markers) remain rare in the wild as of mid-2026. The one genuine tool limitation this exercise surfaced — the [#3 render timeout](#problem-a-the-3-render-timeout-now-fixed) — has since been **fixed**, turning six `unknown`s into five passes and one true negative.
