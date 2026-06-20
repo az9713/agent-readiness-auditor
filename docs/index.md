@@ -16,6 +16,7 @@ A command-line tool that audits one website for how usable it is to AI agents ra
 | [System design](architecture/system-design.md) | Architecture, the tier model, security, testing |
 | [Example audit](examples/comparative-audit.md) | A worked comparison of vercel.com, stripe.com, cloudflare.com with per-check interpretation |
 | [Commerce & Monetization audit](examples/commerce-and-monetization-audit.md) | Exercising the storefront and paywall checks on Shopify and publisher sites |
+| [Full audit log](examples/full-audit-log.md) | Every site, every check, in full — with the problems encountered and their fixes |
 | [Troubleshooting](troubleshooting/common-issues.md) | The errors you are most likely to hit, and their fixes |
 
 ## Background reading
