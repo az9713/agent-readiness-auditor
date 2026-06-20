@@ -4,9 +4,9 @@ The failures you are most likely to hit, ordered by how often they happen. Each 
 
 ---
 
-## Check #3 always shows "unknown"
+## Check #3 shows "unknown" on *every* site
 
-**Symptom:** Every run shows `— [ 3] Readable without JavaScript — could not render: ...`.
+**Symptom:** Every run, on every URL, shows `— [ 3] Readable without JavaScript — could not render: ...`.
 
 **Cause:** Playwright's Chromium browser is not installed. The Python package alone is not enough — the browser binary is a separate download.
 
@@ -17,6 +17,23 @@ python -m playwright install chromium
 ```
 
 **If that doesn't work:** you are likely behind a proxy. Set `HTTPS_PROXY` and retry, or run the install on a machine with open outbound access and copy the browser cache.
+
+---
+
+## Check #3 shows "unknown" on one specific site (render timeout)
+
+**Symptom:** Check #3 reports `— could not render: Page.goto: Timeout 15000ms exceeded` on a particular heavy site (ad/analytics/websocket-heavy pages, large e-commerce and news homepages), while other sites render fine.
+
+**Cause:** Check #3 loads the page in the headless browser and gives client-side JavaScript a moment to render. On a site whose page is still loading when the `TIMEOUT` (default 15s) elapses, the navigation itself times out and the render returns nothing, so #3 degrades to `unknown`. It never crashes the run — the other 21 checks use the plain HTTP fetch and are unaffected.
+
+> **Note:** the common cause of this — waiting for the network to fully idle — was fixed. The tool now navigates with `domcontentloaded` and only *best-effort* waits up to 5s for the network to settle, so most heavy sites that used to time out now return a real result. This entry covers the residual cases: sites slow enough that even the initial page load exceeds `TIMEOUT`.
+
+**Fix:**
+
+1. Re-run — it is often transient (a slow first load, a cold CDN edge).
+2. If it persists on a site you need, raise the `TIMEOUT` constant in `agent_audit.py` (default `15`; try `30`).
+
+**Interpreting it:** an `unknown` here means "could not measure," not pass or fail. Do not read it as either. A genuine ❌ on #3 reads differently — `raw text only N% of rendered — content needs JavaScript` — and means the page really does depend on JavaScript.
 
 ---
 
