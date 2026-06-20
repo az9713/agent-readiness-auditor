@@ -14,6 +14,7 @@ A command-line tool that audits one website for how usable it is to AI agents ra
 | [Checks reference](reference/checks.md) | All 22 checks (12 Tier-A + 10 Tier-B): source, pass/fail logic, example output |
 | [CLI reference](reference/cli.md) | Arguments, flags, output formats, JSON schema, exit codes, tunables |
 | [System design](architecture/system-design.md) | Architecture, the tier model, security, testing |
+| [Example audit](examples/comparative-audit.md) | A worked comparison of vercel.com, stripe.com, cloudflare.com with per-check interpretation |
 | [Troubleshooting](troubleshooting/common-issues.md) | The errors you are most likely to hit, and their fixes |
 
 ## Background reading
