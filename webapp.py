@@ -141,7 +141,12 @@ f.addEventListener('submit', async (e) => {
     if (data.error) { render_error(data.error); }
     else { render(data); }
   } catch (err) {
-    render_error(String(err));
+    // A failed fetch (TypeError) almost always means the local server isn't running —
+    // give that hint instead of the cryptic "Failed to fetch".
+    const net = (err instanceof TypeError);
+    render_error(net
+      ? "Could not reach the auditor server. Is it still running? Start it with: python webapp.py"
+      : String(err));
   } finally {
     go.disabled = false;
     statusEl.textContent = '';
