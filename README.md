@@ -26,6 +26,18 @@ Tier-A facts   — Read 0/3 · Trust 0/2 · Freshness 1/4 · Discovery 1/3   (�
 Tier-B signals — Docs 0/2 · Permissions 1/2 · Commerce 0/4 · Monetization 0/2   (✅ found · ❌ barrier · — none visible; signals, not proof)
 ```
 
+## Web UI
+
+Prefer a browser to a terminal? A single-file local web app wraps the same auditor — type a URL, get the Tier-A facts and Tier-B signals laid out and explained, each check with its live finding **and** a plain-English note on what it looks for.
+
+```bash
+python webapp.py            # then open http://127.0.0.1:8000
+```
+
+![The Agent Readiness Auditor web UI showing a full audit of vercel.com — Tier-A facts and Tier-B proxy signals, each check colour-coded pass/fail/unknown with an explanation.](docs/assets/web-ui.png)
+
+It is stdlib-only (no Flask, no extra dependency) and reuses `agent_audit.py` unchanged, so the page and the CLI can never disagree about a result. See [docs/getting-started/web-ui.md](docs/getting-started/web-ui.md).
+
 ## The development journey
 
 This project was built incrementally, and each design fork is documented in full:
@@ -111,6 +123,7 @@ The checks are pure functions over a fetched-once `Context`, which is what makes
 | Path | Purpose |
 |------|---------|
 | `agent_audit.py` | The tool: fetch context once, run 22 checks, print text or JSON. |
+| `webapp.py` | Local web UI over the same auditor (stdlib `http.server`, no new dependency). |
 | `test_auditor.py` | 34 offline tests. |
 | `requirements.txt` | `requests`, `beautifulsoup4`, `lxml`, `playwright`, `defusedxml`. |
 | `docs/` | Production documentation. |

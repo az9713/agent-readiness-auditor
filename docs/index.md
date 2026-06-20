@@ -10,6 +10,7 @@ A command-line tool that audits one website for how usable it is to AI agents ra
 |---------|---------------|
 | [Installation](getting-started/installation.md) | Dependencies, Playwright browser, verify commands |
 | [Quickstart](getting-started/quickstart.md) | First real audit in under 10 minutes |
+| [Web UI](getting-started/web-ui.md) | Run the auditor in the browser — enter a URL, see Tier-A/Tier-B results explained |
 | [Key concepts](overview/key-concepts.md) | Glossary of every term used in these docs |
 | [Checks reference](reference/checks.md) | All 22 checks (12 Tier-A + 10 Tier-B): source, pass/fail logic, example output |
 | [CLI reference](reference/cli.md) | Arguments, flags, output formats, JSON schema, exit codes, tunables |
