@@ -32,6 +32,8 @@ Prefer a browser to a terminal? A single-file web app wraps the same auditor —
 
 **▶ Live, in-browser auditor: <https://az9713.github.io/agent-readiness-auditor/>** — enter a URL and the audit runs **client-side**, with results rendered in the page. No server: a JavaScript port of the checks reads the target site through a public CORS proxy and parses it with the browser's own DOM/XML/JSON parsers.
 
+https://github.com/user-attachments/assets/6205ca2e-ba13-458c-8395-c956bf013dcf
+
 Because a static page has no response headers and no headless browser, the ~4 checks that need them — readable-without-JS (#3), CDN (#10), Last-Modified/ETag (#19), cache (#21) — show `—` with a note. For **all 22 checks at full fidelity**, run the web UI locally (stdlib-only, no Flask, no extra dependency):
 
 ```bash
