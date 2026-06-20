@@ -409,6 +409,35 @@ def test_broken_check_is_isolated():
     assert any(r["status"] == UNKNOWN for r in results), "a raising check should become unknown"
 
 
+def test_ssrf_ip_classifier_blocks_internal():
+    """The public-demo SSRF guard must block private/loopback/link-local/metadata IPs."""
+    import webapp
+    blocked = ["127.0.0.1", "::1", "169.254.169.254",      # loopback + cloud metadata
+               "10.0.0.1", "172.16.5.5", "192.168.1.1",     # RFC1918 private
+               "0.0.0.0", "fe80::1", "::ffff:127.0.0.1",     # unspecified, link-local, v4-mapped loopback
+               "not-an-ip"]                                  # unparseable → block
+    for ip in blocked:
+        assert webapp._ip_is_blocked(ip), f"{ip} must be blocked"
+
+
+def test_ssrf_ip_classifier_allows_public():
+    """Real public addresses must pass the SSRF guard."""
+    import webapp
+    for ip in ["8.8.8.8", "1.1.1.1", "93.184.216.34", "2606:2800:220:1:248:1893:25c8:1946"]:
+        assert not webapp._ip_is_blocked(ip), f"{ip} must be allowed"
+
+
+def test_ssrf_reject_non_http_scheme():
+    """Non-http(s) schemes are refused before any DNS/fetch happens."""
+    import webapp
+    for bad in ["ftp://example.com", "file:///etc/passwd", "gopher://x"]:
+        try:
+            webapp.reject_if_unsafe(bad)
+            assert False, f"{bad} should have raised"
+        except ValueError:
+            pass
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:

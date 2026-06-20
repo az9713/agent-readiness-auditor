@@ -15,7 +15,10 @@ worker thread with no asyncio loop fighting it.
 """
 import argparse
 import datetime
+import ipaddress
 import json
+import os
+import socket
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -222,10 +225,52 @@ def render_page():
             .replace("__B_ORDER__", json.dumps(audit.TIER_B_GROUP_ORDER)))
 
 
+# ---------------------------------------------------------------------------
+# SSRF guard — only enforced on the public demo (env PUBLIC_DEMO set). A public
+# endpoint that fetches any URL a stranger submits is an SSRF vector: without
+# this, someone points it at 169.254.169.254 (cloud metadata) or 127.0.0.1 to
+# reach internal services. Local CLI/web use is the operator auditing their own
+# targets, so the guard stays off there.
+# ponytail: this blocks DIRECT private targets (the common attack). It does NOT
+# re-check redirect hops — requests follows redirects, so a public host that 302s
+# to 169.254.169.254 is the residual hole. Upgrade path if the demo sees abuse:
+# a requests HTTPAdapter that re-validates every hop, or allow_redirects=False.
+# ---------------------------------------------------------------------------
+def _ip_is_blocked(ip):
+    """True if an IP must never be fetched from the public demo. Pure (no DNS) — unit-tested."""
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return True  # unparseable → block
+    if addr.version == 6 and addr.ipv4_mapped is not None:
+        return _ip_is_blocked(str(addr.ipv4_mapped))  # ::ffff:127.0.0.1 etc.
+    return (addr.is_private or addr.is_loopback or addr.is_link_local
+            or addr.is_reserved or addr.is_multicast or addr.is_unspecified)
+
+
+def reject_if_unsafe(url):
+    """Raise ValueError unless url is a public http(s) target. SSRF guard for the demo."""
+    p = urlparse(url)
+    if p.scheme not in ("http", "https"):
+        raise ValueError(f"only http/https URLs are allowed (got '{p.scheme or 'none'}')")
+    host = p.hostname
+    if not host:
+        raise ValueError("no host in URL")
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror as e:
+        raise ValueError(f"could not resolve host: {e}")
+    for info in infos:
+        if _ip_is_blocked(info[4][0]):
+            raise ValueError("refusing to audit a private, loopback, or link-local address")
+
+
 def run_audit(url, sample):
     """Run the existing auditor and return the same JSON shape the CLI's --json emits."""
     if "://" not in url:
         url = "https://" + url
+    if os.environ.get("PUBLIC_DEMO"):
+        reject_if_unsafe(url)  # raises ValueError on private/loopback/non-http targets
     ctx = audit.fetch_context(url, sample=sample)          # may raise ConnectionError
     results = audit.run_checks(ctx)
     summary = audit.summarize(results)
@@ -264,6 +309,9 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 payload = run_audit(url, sample=max(0, min(sample, 25)))
                 self._send(200, json.dumps(payload, ensure_ascii=False), "application/json")
+            except ValueError as e:
+                # SSRF guard / bad input rejection — show the reason, don't audit.
+                self._send(200, json.dumps({"error": str(e)}), "application/json")
             except ConnectionError as e:
                 # Site unreachable is the auditor's one expected failure — report, don't 500.
                 self._send(200, json.dumps({"error": str(e)}), "application/json")
@@ -278,11 +326,14 @@ class Handler(BaseHTTPRequestHandler):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Local web UI for the Agent Readiness Auditor")
-    ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--port", type=int, default=8000)
+    # Defaults come from env so a host (Render/Railway/Fly) can set PORT and HOST=0.0.0.0
+    # without CLI args. Local default stays 127.0.0.1 — bind public only when you mean to.
+    ap.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
+    ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
     args = ap.parse_args(argv)
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"Agent Readiness Auditor — http://{args.host}:{args.port}  (Ctrl-C to stop)")
+    demo = " [PUBLIC_DEMO: SSRF guard on]" if os.environ.get("PUBLIC_DEMO") else ""
+    print(f"Agent Readiness Auditor — http://{args.host}:{args.port}{demo}  (Ctrl-C to stop)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

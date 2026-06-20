@@ -1,0 +1,15 @@
+# Render Blueprint — deploy the Agent Readiness Auditor web demo.
+# In Render: New → Blueprint → point at this repo. Render builds the Dockerfile,
+# provides $PORT, and the service comes up at https://<name>.onrender.com.
+services:
+  - type: web
+    name: agent-readiness-auditor
+    runtime: docker
+    plan: free            # free tier spins down when idle; first hit after idle is a cold start (~30-60s)
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: PUBLIC_DEMO  # turn the SSRF guard on (also set in the Dockerfile; explicit here too)
+        value: "1"
+      - key: HOST
+        value: 0.0.0.0

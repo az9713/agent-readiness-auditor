@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Readiness Auditor</title>
+<meta name="description" content="Audit any website for how usable it is to AI agents — 12 Tier-A fact checks + 10 Tier-B proxy signals, pass/fail/unknown, no blended score.">
+<meta property="og:title" content="Agent Readiness Auditor">
+<meta property="og:description" content="How usable is a website to an AI agent — not to a human?">
+<style>
+  :root { --bg:#0f1115; --card:#191c23; --line:#2a2f3a; --fg:#e6e9ef; --mut:#9aa3b2;
+          --pass:#3fb950; --fail:#f85149; --unk:#8b949e; --accent:#58a6ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  .wrap { max-width:880px; margin:0 auto; padding:40px 20px 80px; }
+  h1 { font-size:30px; margin:0 0 4px; }
+  .sub { color:var(--mut); margin:0 0 28px; font-size:17px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; }
+  form { display:flex; gap:8px; }
+  input[type=text] { flex:1; padding:11px 13px; border:1px solid var(--line); border-radius:8px;
+                     background:var(--bg); color:var(--fg); font-size:15px; }
+  input[type=text]:focus { outline:none; border-color:var(--accent); }
+  button { padding:11px 18px; border:0; border-radius:8px; background:var(--accent);
+           color:#06223f; font-weight:600; font-size:15px; cursor:pointer; }
+  .fineprint { color:var(--mut); font-size:13px; margin:10px 0 0; }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--mut);
+       margin:34px 0 12px; border-bottom:1px solid var(--line); padding-bottom:6px; }
+  img.shot { width:100%; border:1px solid var(--line); border-radius:12px; display:block; }
+  pre { background:#0b0d12; border:1px solid var(--line); border-radius:8px; padding:14px 16px;
+        overflow:auto; font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .cols h3 { margin:0 0 8px; font-size:15px; }
+  .cols .accent { color:var(--accent); }
+  ul { margin:6px 0; padding-left:18px; color:var(--mut); }
+  a { color:var(--accent); }
+  .legend { color:var(--mut); font-size:13px; margin-top:6px; }
+  footer { color:var(--mut); font-size:13px; margin-top:40px; border-top:1px solid var(--line); padding-top:16px; }
+  @media (max-width:640px){ .cols { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Agent Readiness Auditor</h1>
+  <p class="sub">How usable is a website to an AI agent — not to a human?</p>
+
+  <div class="card">
+    <form id="f">
+      <input id="url" type="text" placeholder="example.com" required autofocus>
+      <button type="submit">Audit&nbsp;▶</button>
+    </form>
+    <p class="fineprint">
+      This opens a pre-filled <b>GitHub issue</b> with your URL — the audit runs in CI and the
+      result is posted back. <b>Want instant results?</b> Run it locally in one command (below);
+      the live in-browser version can't run here because GitHub Pages is static (no server,
+      no headless browser).
+    </p>
+  </div>
+
+  <h2>What a report looks like</h2>
+  <img class="shot" src="docs/assets/web-ui.png"
+       alt="A full audit of vercel.com: Tier-A facts and Tier-B proxy signals, each check colour-coded pass/fail/unknown with a plain-English explanation.">
+  <p class="legend">✅ pass · ❌ fail · — unknown. Tier-A are verified facts; Tier-B are proxy
+     signals (a ✅ is trustworthy, a — is <b>not</b> proof of absence). No blended score.</p>
+
+  <h2>Run a live audit in 30 seconds</h2>
+  <p style="color:var(--mut);margin:0 0 10px">Clone the repo, then either the CLI or the local web UI:</p>
+  <pre>git clone https://github.com/az9713/agent-readiness-auditor
+cd agent-readiness-auditor
+pip install -r requirements.txt
+python -m playwright install chromium
+
+# command line:
+python agent_audit.py vercel.com
+
+# or the web UI (same page as the screenshot, fully interactive):
+python webapp.py          # then open http://127.0.0.1:8000</pre>
+
+  <h2>What it checks</h2>
+  <div class="cols">
+    <div>
+      <h3><span class="accent">Tier&nbsp;A</span> — facts (12)</h3>
+      <ul>
+        <li><b>Read:</b> llms.txt, structured data, coverage</li>
+        <li><b>Trust:</b> AI-bot policy, allow/block stance</li>
+        <li><b>Freshness:</b> dates, Last-Modified/ETag, canonical, cache</li>
+        <li><b>Discovery:</b> sitemap.xml, readable-without-JS, OpenGraph</li>
+      </ul>
+    </div>
+    <div>
+      <h3><span class="accent">Tier&nbsp;B</span> — proxies (10)</h3>
+      <ul>
+        <li><b>Docs:</b> markdown alternative, public API spec</li>
+        <li><b>Permissions:</b> automated-use policy, CDN / pay-per-crawl</li>
+        <li><b>Commerce:</b> product feed, price/stock, CAPTCHA, A2A/AP2/UCP/x402</li>
+        <li><b>Monetization:</b> content-licensing / AI-access, paywall</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/az9713/agent-readiness-auditor">Source on GitHub</a> ·
+    <a href="https://github.com/az9713/agent-readiness-auditor/blob/main/docs/index.md">Docs</a> ·
+    <a href="https://github.com/az9713/agent-readiness-auditor/blob/main/docs/examples/full-audit-log.md">Full audit log</a> ·
+    <a href="https://github.com/az9713/agent-readiness-auditor/blob/main/development-journey.md">How it was built</a>
+  </footer>
+</div>
+
+<script>
+  // The "Audit" button is the front door of the Issue → Action → Pages flow: it opens a
+  // pre-filled GitHub issue. No backend is needed for this, which is why it works on static Pages.
+  const REPO = "https://github.com/az9713/agent-readiness-auditor";
+  document.getElementById('f').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const url = document.getElementById('url').value.trim();
+    if (!url) return;
+    const title = encodeURIComponent("Audit request: " + url);
+    const body = encodeURIComponent(
+      "Please audit this URL with the Agent Readiness Auditor:\n\n" + url +
+      "\n\n(Run locally for instant results: `python agent_audit.py " + url + "`)");
+    window.open(REPO + "/issues/new?title=" + title + "&body=" + body, "_blank", "noopener");
+  });
+</script>
+</body>
+</html>

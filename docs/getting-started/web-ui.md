@@ -21,8 +21,13 @@ well-known files, and render the page once in a headless browser.
 
 | Option | Default | Effect |
 |--------|---------|--------|
-| `--port N` | `8000` | Port to listen on. |
-| `--host H` | `127.0.0.1` | Interface to bind. Leave as localhost unless you intend to expose it. |
+| `--port N` | `8000` | Port to listen on. Also read from the `PORT` env var (hosts set this). |
+| `--host H` | `127.0.0.1` | Interface to bind. Also read from the `HOST` env var. Leave as localhost unless you intend to expose it. |
+
+Setting the `PUBLIC_DEMO=1` env var turns on the **SSRF guard** — the server then refuses to
+audit private, loopback, link-local, or reserved addresses (e.g. `127.0.0.1`,
+`169.254.169.254`) and non-`http(s)` schemes. It is off locally (so you can audit your own
+localhost site) and on for the hosted demo. To deploy your own, see [DEPLOY.md](../../DEPLOY.md).
 
 ## How to read the page
 
