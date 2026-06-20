@@ -6,9 +6,17 @@ The failures you are most likely to hit, ordered by how often they happen. Each 
 
 ## Check #3 shows "unknown" on *every* site
 
+> **Already installed?** If you completed [installation](../getting-started/installation.md) — `pip install -r requirements.txt` **and** `python -m playwright install chromium` — then Playwright and its Chromium browser are already installed, and you will not hit this. Verify with:
+>
+> ```bash
+> python -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); b=p.chromium.launch(); print('chromium OK'); b.close(); p.stop()"
+> ```
+>
+> If that prints `chromium OK`, Playwright is set up correctly — a `—` on #3 is then the per-site render timeout below, not a missing browser.
+
 **Symptom:** Every run, on every URL, shows `— [ 3] Readable without JavaScript — could not render: ...`.
 
-**Cause:** Playwright's Chromium browser is not installed. The Python package alone is not enough — the browser binary is a separate download.
+**Cause:** Playwright's Chromium browser was never installed (the install step was skipped). The Python package alone is not enough — the browser binary is a separate download.
 
 **Fix:**
 
